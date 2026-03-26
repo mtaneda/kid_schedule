@@ -48,11 +48,40 @@ body {
 .time-timer {
     width: 150px; height: 150px; flex-shrink: 0;
     border-radius: 50%;
-    /* 12時から時計回りに描画し、それを左右反転させることで「反時計回り」のタイマーを再現 */
-    background: conic-gradient(#FF3B30 calc(var(--remaining-pct) * 1%), #FFFFFF 0);
-    border: 8px solid #333;
+    background: #FFFFFF; /* ベースの白背景 */
+    border: 6px solid #333; /* 8pxから25%細くして6pxに */
     box-shadow: 0 8px 16px rgba(0,0,0,0.2);
     transform: scaleX(-1);
+    position: relative; /* 目盛りの基準位置 */
+}
+
+/* 目盛り（5分=太線、1分=細線） */
+.time-timer::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 10; /* 扇より下のレイヤー */
+    border-radius: 50%;
+    background: 
+        repeating-conic-gradient(#333 0deg, #333 2deg, transparent 2deg, transparent 30deg),
+        repeating-conic-gradient(#333 0deg, #333 1deg, transparent 1deg, transparent 6deg);
+    -webkit-mask-image: radial-gradient(closest-side, transparent 80%, black 81%);
+    mask-image: radial-gradient(closest-side, transparent 80%, black 81%);
+    transform: rotate(-1deg);
+    pointer-events: none;
+}
+
+/* 赤い扇形（目盛りの上に重なって一部を隠す） */
+.time-timer::after {
+    content: "";
+    position: absolute;
+    /* 目盛りの長さの半分（半径90%相当）まで赤の扇を描画する */
+    top: 5%; left: 5%; width: 90%; height: 90%;
+    z-index: 20; /* 目盛りの上に重ねる */
+    border-radius: 50%;
+    /* 12時から時計回りに描画し、それを左右反転させることで「反時計回り」のタイマーを再現 */
+    background: conic-gradient(#FF3B30 calc(var(--remaining-pct) * 1%), transparent 0);
+    pointer-events: none;
 }
 
 #message-box {
