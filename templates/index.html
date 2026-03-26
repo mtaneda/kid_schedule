@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>きょうのよてい</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body onload="initApp()">
+    <div id="start-screen" onclick="startApp()">
+        <h1>タッチしてスタート！👆</h1>
+    </div>
+
+    <div id="main-screen" style="display: none;">
+        <div id="top-bar">
+            <div id="weather">
+                <span id="weather-icon">☁️</span>
+                <span id="weather-temp">-- / --</span>
+            </div>
+            <div id="clock">00:00</div>
+        </div>
+
+        <div id="content-area">
+            <div id="time-timer" class="time-timer" style="--remaining-pct: 0; display: none;"></div>
+            <div id="message-box">
+                <p id="current-message">よみこみちゅう...</p>
+            </div>
+        </div>
+    </div>
+
+    <audio id="sound-change" preload="auto"></audio>
+    <audio id="sound-warning" preload="auto"></audio>
+
+    <script src="/static/js/main.js"></script>
+</body>
+</html>

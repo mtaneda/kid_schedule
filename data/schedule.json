@@ -1,0 +1,23 @@
+{
+  "schedule": [
+    {
+      "id": 101,
+      "day": 1,
+      "start": "07:00",
+      "end": "07:30",
+      "message": "おきるじかんです。きがえましょう。👕"
+    },
+    {
+      "id": 102,
+      "day": 1,
+      "start": "20:00",
+      "end": "20:30",
+      "message": "ねるじかんです。🛌😌💤"
+    }
+  ],
+  "settings": {
+    "night_mode_end": "05:00",
+    "night_mode_start": "23:00",
+    "warning_minutes": 3
+  }
+}
