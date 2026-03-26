@@ -1,3 +1,14 @@
+/**
+ * @file main.js
+ * @copyright Copyright (C) 2026 mtaneda All rights reserved.
+ * @license MIT License
+ *
+ * @remarks
+ * 子どものスケジュール管理アプリケーションのメインスクリプト
+ *
+ * @see {README.md}
+ */
+
 let scheduleData = { schedule: [], settings: { warning_minutes: 3, night_mode_start: "23:00", night_mode_end: "05:00" } };
 let currentTaskId = null;
 let warningPlayedForTaskId = null;
@@ -6,6 +17,9 @@ let warningPlayedForTaskId = null;
 const LAT = 35.6895;
 const LON = 139.6917;
 
+/**
+ * 初期化処理を行います。
+ */
 function initApp() {
     const timestamp = new Date().getTime();
     document.getElementById('sound-change').src = `/static/sounds/change.mp3?t=${timestamp}`;
@@ -18,6 +32,9 @@ function initApp() {
     setInterval(fetchWeather, 3600000); // 天気は1時間ごとに更新
 }
 
+/**
+ * フルスクリーン表示を要求してアプリを開始します。
+ */
 function requestFullAndStart() {
     const docElm = document.documentElement;
     if (docElm.requestFullscreen) {
@@ -33,16 +50,22 @@ function requestFullAndStart() {
     startApp();
 }
 
+/**
+ * スタート画面を非表示にし、メイン画面を表示して音声を初期化します。
+ */
 function startApp() {
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('main-screen').style.display = 'flex';
 
     const soundChange = document.getElementById('sound-change');
     const soundWarning = document.getElementById('sound-warning');
-    soundChange.play().then(() => soundChange.pause()).catch(e => {});
-    soundWarning.play().then(() => soundWarning.pause()).catch(e => {});
+    soundChange.play().then(() => soundChange.pause()).catch(e => { });
+    soundWarning.play().then(() => soundWarning.pause()).catch(e => { });
 }
 
+/**
+ * サーバーからスケジュールデータを取得します。
+ */
 async function fetchData() {
     try {
         const response = await fetch('/api/data');
@@ -51,6 +74,9 @@ async function fetchData() {
 }
 
 // 🌤 天気取得機能 (Open-Meteo API)
+/**
+ * Open-Meteo API から天気を取得します。
+ */
 async function fetchWeather() {
     try {
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Asia%2FTokyo`;
@@ -77,6 +103,9 @@ async function fetchWeather() {
     }
 }
 
+/**
+ * 現在の時刻とスケジュールを比較し、画面表示や音声を更新します。
+ */
 function checkSchedule() {
     const now = new Date();
     const currentDay = now.getDay();
@@ -152,11 +181,22 @@ function checkSchedule() {
     }
 }
 
+/**
+ * hh:mm 形式の文字列を分(分単位の数値)に変換します。
+ * 
+ * @param {string} timeStr - 時刻文字列
+ * @returns {number} 分数
+ */
 function parseTimeToMinutes(timeStr) {
     const [h, m] = timeStr.split(':').map(Number);
     return h * 60 + m;
 }
 
+/**
+ * 指定された ID の音声を再生します。
+ * 
+ * @param {string} id - 音声要素のID
+ */
 function playSound(id) {
     const audio = document.getElementById(id);
     audio.currentTime = 0;
