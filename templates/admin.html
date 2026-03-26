@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>スケジュール管理</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f0f0f0; }
+        .container { background: white; padding: 20px; border-radius: 8px; max-width: 800px; margin: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        input, select, button { padding: 5px; margin: 2px; }
+        button { cursor: pointer; background: #007BFF; color: white; border: none; border-radius: 4px; padding: 8px 12px; }
+        .btn-danger { background: #DC3545; }
+        .btn-success { background: #28A745; font-size: 1.2em; width: 100%; padding: 15px; margin-top: 20px; }
+        .section-box { background: #e9ecef; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        h2, h3 { color: #333; border-bottom: 2px solid #ccc; padding-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🗓 1週間のスケジュール管理</h2>
+
+        <div class="section-box">
+            <h3>⚙️ 基本設定</h3>
+            <label>事前通知アラーム: </label>
+            <input type="number" id="warning_minutes" min="1" max="10" style="width: 50px;"> 分前<br><br>
+
+            <label>おやすみモード（画面を暗くする）: </label>
+            <input type="time" id="night_mode_start"> 〜
+            <input type="time" id="night_mode_end">
+        </div>
+
+        <h3>📅 スケジュール一覧</h3>
+        <table id="scheduleTable">
+            <thead>
+                <tr>
+                    <th>曜日</th><th>開始</th><th>終了</th><th>メッセージ（ひらがな・絵文字）</th><th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+
+        <h3>➕ 新しい予定を追加</h3>
+        <div class="section-box">
+            <select id="new_day">
+                <option value="1">月曜日</option><option value="2">火曜日</option><option value="3">水曜日</option>
+                <option value="4">木曜日</option><option value="5">金曜日</option><option value="6">土曜日</option><option value="0">日曜日</option>
+            </select>
+            <input type="time" id="new_start" required> 〜
+            <input type="time" id="new_end" required>
+            <input type="text" id="new_message" placeholder="おきるじかんです👕" style="width: 250px;" required>
+            <button onclick="addSchedule()">追加</button>
+        </div>
+
+        <button class="btn-success" onclick="saveData()">💾 スケジュールと設定をサーバーに保存する</button>
+
+        <br><br>
+
+        <h2>🎵 音声ファイルの変更（mp3のみ）</h2>
+        <div class="section-box">
+            <p><strong>予定が切り替わったときの音</strong></p>
+            <input type="file" id="file_change" accept=".mp3">
+            <button onclick="uploadSound('change')">アップロード</button>
+
+            <p style="margin-top: 15px;"><strong>数分前の予告音（事前通知アラーム）</strong></p>
+            <input type="file" id="file_warning" accept=".mp3">
+            <button onclick="uploadSound('warning')">アップロード</button>
+        </div>
+    </div>
+
+    <script>
+        let currentData = { settings: {}, schedule: [] };
+        const days = ["日", "月", "火", "水", "木", "金", "土"];
+
+        window.onload = async () => {
+            const res = await fetch('/api/data');
+            currentData = await res.json();
+
+            // 設定値の反映
+            document.getElementById('warning_minutes').value = currentData.settings.warning_minutes || 3;
+            document.getElementById('night_mode_start').value = currentData.settings.night_mode_start || "23:00";
+            document.getElementById('night_mode_end').value = currentData.settings.night_mode_end || "05:00";
+
+            renderTable();
+        };
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            currentData.schedule.sort((a, b) => a.day - b.day || a.start.localeCompare(b.start)).forEach((item, index) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${days[item.day]}</td>
+                        <td><input type="time" value="${item.start}" onchange="updateItem(${index}, 'start', this.value)"></td>
+                        <td><input type="time" value="${item.end}" onchange="updateItem(${index}, 'end', this.value)"></td>
+                        <td><input type="text" value="${item.message}" onchange="updateItem(${index}, 'message', this.value)" style="width:100%;"></td>
+                        <td><button class="btn-danger" onclick="deleteItem(${index})">削除</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function updateItem(index, key, value) {
+            currentData.schedule[index][key] = value;
+        }
+
+        function deleteItem(index) {
+            currentData.schedule.splice(index, 1);
+            renderTable();
+        }
+
+        function addSchedule() {
+            currentData.schedule.push({
+                id: Date.now(),
+                day: parseInt(document.getElementById('new_day').value),
+                start: document.getElementById('new_start').value,
+                end: document.getElementById('new_end').value,
+                message: document.getElementById('new_message').value
+            });
+            renderTable();
+        }
+
+        async function saveData() {
+            currentData.settings.warning_minutes = parseInt(document.getElementById('warning_minutes').value);
+            currentData.settings.night_mode_start = document.getElementById('night_mode_start').value;
+            currentData.settings.night_mode_end = document.getElementById('night_mode_end').value;
+
+            const res = await fetch('/api/data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(currentData)
+            });
+            if (res.ok) alert('保存しました！タブレットの画面は自動で切り替わります。');
+        }
+
+        async function uploadSound(type) {
+            const fileInput = document.getElementById(`file_${type}`);
+            if (!fileInput.files.length) {
+                alert('ファイルを選択してください');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('type', type);
+
+            const res = await fetch('/api/upload_sound', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (res.ok) {
+                alert('音声を更新しました！タブレットをリロード（再読み込み）すると新しい音が鳴ります。');
+                fileInput.value = ''; // ファイル選択をクリア
+            } else {
+                alert('アップロードに失敗しました。');
+            }
+        }
+    </script>
+</body>
+</html>
