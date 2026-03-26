@@ -13,9 +13,24 @@ function initApp() {
 
     fetchData();
     fetchWeather(); // 天気を取得
-    setInterval(fetchData, 60000);
+    setInterval(fetchData, 5000);
     setInterval(checkSchedule, 1000);
     setInterval(fetchWeather, 3600000); // 天気は1時間ごとに更新
+}
+
+function requestFullAndStart() {
+    const docElm = document.documentElement;
+    if (docElm.requestFullscreen) {
+        docElm.requestFullscreen();
+    } else if (docElm.mozRequestFullScreen) { /* Firefox */
+        docElm.mozRequestFullScreen();
+    } else if (docElm.webkitRequestFullscreen) { /* Chrome, Safari, Silk */
+        docElm.webkitRequestFullscreen();
+    } else if (docElm.msRequestFullscreen) { /* IE/Edge */
+        docElm.msRequestFullscreen();
+    }
+
+    startApp();
 }
 
 function startApp() {
