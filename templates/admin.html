@@ -14,63 +14,114 @@
         .btn-success { background: #28A745; font-size: 1.2em; width: 100%; padding: 15px; margin-top: 20px; }
         .section-box { background: #e9ecef; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
         h2, h3 { color: #333; border-bottom: 2px solid #ccc; padding-bottom: 5px; }
+
+        /* タブメニュー（メイン） */
+        .tab-menu { display: flex; border-bottom: 2px solid #007BFF; margin-bottom: 20px; }
+        .tab-menu button { background: #e9ecef; color: #333; border: 1px solid #ccc; border-bottom: none; border-radius: 8px 8px 0 0; padding: 10px 20px; margin-right: 5px; font-size: 1.1em; opacity: 0.7; }
+        .tab-menu button.active { background: #007BFF; color: white; border-color: #007BFF; font-weight: bold; opacity: 1; }
+        
+        /* コンテンツエリア */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* 曜日別サブタブメニュー */
+        .day-tab-menu { display: flex; flex-wrap: wrap; margin-bottom: 15px; gap: 5px; }
+        .day-tab-menu button { background: #fff; color: #007BFF; border: 1px solid #007BFF; border-radius: 20px; padding: 8px 15px; }
+        .day-tab-menu button.active { background: #007BFF; color: white; font-weight: bold; }
+        
+        .copy-section { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; background: #fff; padding: 10px; border-radius: 5px; border: 1px dashed #007BFF; }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>🗓 1週間のスケジュール管理</h2>
 
-        <div class="section-box">
-            <h3>⚙️ 基本設定</h3>
-            <label>事前通知アラーム: </label>
-            <input type="number" id="warning_minutes" min="1" max="10" style="width: 50px;"> 分前<br><br>
-
-            <label>おやすみモード（画面を暗くする）: </label>
-            <input type="time" id="night_mode_start"> 〜
-            <input type="time" id="night_mode_end">
+        <!-- メインタブメニュー -->
+        <div class="tab-menu" id="main-tabs">
+            <button class="active" onclick="showTab('tab-settings')">⚙️ 基本設定</button>
+            <button onclick="showTab('tab-schedule')">📅 スケジュール一覧</button>
+            <button onclick="showTab('tab-sounds')">🎵 音声ファイルの変更</button>
         </div>
 
-        <h3>📅 スケジュール一覧</h3>
-        <table id="scheduleTable">
-            <thead>
-                <tr>
-                    <th>曜日</th><th>開始</th><th>終了</th><th>メッセージ（ひらがな・絵文字）</th><th>操作</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-        </table>
+        <!-- 1. 基本設定タブ -->
+        <div id="tab-settings" class="tab-content active">
+            <div class="section-box">
+                <h3>⚙️ 基本設定</h3>
+                <label>事前通知アラーム: </label>
+                <input type="number" id="warning_minutes" min="1" max="10" style="width: 50px;"> 分前<br><br>
 
-        <h3>➕ 新しい予定を追加</h3>
-        <div class="section-box">
-            <select id="new_day">
-                <option value="1">月曜日</option><option value="2">火曜日</option><option value="3">水曜日</option>
-                <option value="4">木曜日</option><option value="5">金曜日</option><option value="6">土曜日</option><option value="0">日曜日</option>
-            </select>
-            <input type="time" id="new_start" required> 〜
-            <input type="time" id="new_end" required>
-            <input type="text" id="new_message" placeholder="おきるじかんです👕" style="width: 250px;" required>
-            <button onclick="addSchedule()">追加</button>
+                <label>おやすみモード（画面を暗くする）: </label>
+                <input type="time" id="night_mode_start"> 〜
+                <input type="time" id="night_mode_end">
+            </div>
+            <button class="btn-success" onclick="saveData()">💾 サーバーに保存する</button>
         </div>
 
-        <button class="btn-success" onclick="saveData()">💾 スケジュールと設定をサーバーに保存する</button>
+        <!-- 2. スケジュール一覧タブ -->
+        <div id="tab-schedule" class="tab-content">
+            <div class="section-box" style="background:#fff;">
+                <!-- 曜日別サブタブ -->
+                <div class="day-tab-menu" id="day-tabs">
+                    <button onclick="showDayTab(1)">月</button>
+                    <button onclick="showDayTab(2)">火</button>
+                    <button onclick="showDayTab(3)">水</button>
+                    <button onclick="showDayTab(4)">木</button>
+                    <button onclick="showDayTab(5)">金</button>
+                    <button onclick="showDayTab(6)">土</button>
+                    <button onclick="showDayTab(0)">日</button>
+                </div>
 
-        <br><br>
+                <div class="copy-section">
+                    <span id="copy-target-label"><strong>月曜日</strong> に</span>
+                    <select id="copy_source_day">
+                        <option value="1">月曜日</option><option value="2">火曜日</option><option value="3">水曜日</option>
+                        <option value="4">木曜日</option><option value="5">金曜日</option><option value="6">土曜日</option><option value="0">日曜日</option>
+                    </select>
+                    <span>の予定を</span>
+                    <button style="background: #28A745;" onclick="copyFromDay()">コピーする</button>
+                </div>
 
-        <h2>🎵 音声ファイルの変更（mp3のみ）</h2>
-        <div class="section-box">
-            <p><strong>予定が切り替わったときの音</strong></p>
-            <input type="file" id="file_change" accept=".mp3">
-            <button onclick="uploadSound('change')">アップロード</button>
+                <table id="scheduleTable">
+                    <thead>
+                        <tr>
+                            <th>開始</th><th>終了</th><th>メッセージ（ひらがな・絵文字）</th><th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
 
-            <p style="margin-top: 15px;"><strong>数分前の予告音（事前通知アラーム）</strong></p>
-            <input type="file" id="file_warning" accept=".mp3">
-            <button onclick="uploadSound('warning')">アップロード</button>
+                <div class="section-box" style="margin-top: 15px;">
+                    <h4>➕ 現在の曜日に新しい予定を追加</h4>
+                    <input type="time" id="new_start" required> 〜
+                    <input type="time" id="new_end" required>
+                    <input type="text" id="new_message" placeholder="おきるじかんです👕" style="width: 250px;" required>
+                    <button onclick="addSchedule()">追加</button>
+                </div>
+            </div>
+            <button class="btn-success" onclick="saveData()">💾 サーバーに保存する</button>
         </div>
+
+        <!-- 3. 音声ファイルの変更タブ -->
+        <div id="tab-sounds" class="tab-content">
+            <div class="section-box">
+                <h3>🎵 音声ファイルの変更（mp3のみ）</h3>
+                <p><strong>予定が切り替わったときの音</strong></p>
+                <input type="file" id="file_change" accept=".mp3">
+                <button onclick="uploadSound('change')">アップロード</button>
+
+                <p style="margin-top: 15px;"><strong>数分前の予告音（事前通知アラーム）</strong></p>
+                <input type="file" id="file_warning" accept=".mp3">
+                <button onclick="uploadSound('warning')">アップロード</button>
+            </div>
+            <button class="btn-success" onclick="saveData()">💾 サーバーに保存する</button>
+        </div>
+
     </div>
 
     <script>
         let currentData = { settings: {}, schedule: [] };
         const days = ["日", "月", "火", "水", "木", "金", "土"];
+        let activeDay = 1; // 初期表示は月曜日
 
         window.onload = async () => {
             const res = await fetch('/api/data');
@@ -81,20 +132,49 @@
             document.getElementById('night_mode_start').value = currentData.settings.night_mode_start || "23:00";
             document.getElementById('night_mode_end').value = currentData.settings.night_mode_end || "05:00";
 
-            renderTable();
+            showDayTab(activeDay); // 初回レンダリング
         };
+
+        // メインタブの切り替え
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('#main-tabs button').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active'); // クリックされたボタン
+        }
+
+        // 曜日別サブタブの切り替え
+        function showDayTab(dayIndex) {
+            activeDay = dayIndex;
+            document.getElementById('copy-target-label').innerHTML = `<strong>${days[activeDay]}曜日</strong> に`;
+            
+            // タブの見た目更新
+            const buttons = document.querySelectorAll('#day-tabs button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // 該当するボタンをアクティブにする(DOMの順番: 月火水木金土日 なのでマッピング注意)
+            const btnIndexArray = [6, 0, 1, 2, 3, 4, 5]; // 0(日)->6, 1(月)->0...
+            buttons[btnIndexArray[dayIndex]].classList.add('active');
+
+            renderTable();
+        }
 
         function renderTable() {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
-            currentData.schedule.sort((a, b) => a.day - b.day || a.start.localeCompare(b.start)).forEach((item, index) => {
+            
+            // 現在の曜日のみフィルタリングして表示
+            const currentDaySchedule = currentData.schedule.filter(item => item.day === activeDay);
+            
+            currentDaySchedule.sort((a, b) => a.start.localeCompare(b.start)).forEach((item) => {
+                const globalIndex = currentData.schedule.indexOf(item); // 削除・更新用のグローバルインデックス
                 tbody.innerHTML += `
                     <tr>
-                        <td>${days[item.day]}</td>
-                        <td><input type="time" value="${item.start}" onchange="updateItem(${index}, 'start', this.value)"></td>
-                        <td><input type="time" value="${item.end}" onchange="updateItem(${index}, 'end', this.value)"></td>
-                        <td><input type="text" value="${item.message}" onchange="updateItem(${index}, 'message', this.value)" style="width:100%;"></td>
-                        <td><button class="btn-danger" onclick="deleteItem(${index})">削除</button></td>
+                        <td><input type="time" value="${item.start}" onchange="updateItem(${globalIndex}, 'start', this.value)"></td>
+                        <td><input type="time" value="${item.end}" onchange="updateItem(${globalIndex}, 'end', this.value)"></td>
+                        <td><input type="text" value="${item.message}" onchange="updateItem(${globalIndex}, 'message', this.value)" style="width:100%;"></td>
+                        <td><button class="btn-danger" onclick="deleteItem(${globalIndex})">削除</button></td>
                     </tr>
                 `;
             });
@@ -105,19 +185,63 @@
         }
 
         function deleteItem(index) {
-            currentData.schedule.splice(index, 1);
-            renderTable();
+            if(confirm("この予定を削除してもよろしいですか？")) {
+                currentData.schedule.splice(index, 1);
+                renderTable();
+            }
         }
 
         function addSchedule() {
+            const startNode = document.getElementById('new_start');
+            const endNode = document.getElementById('new_end');
+            const messageNode = document.getElementById('new_message');
+
+            if(!startNode.value || !endNode.value || !messageNode.value) {
+                alert("開始時間、終了時間、メッセージを入力してください。");
+                return;
+            }
+
             currentData.schedule.push({
                 id: Date.now(),
-                day: parseInt(document.getElementById('new_day').value),
-                start: document.getElementById('new_start').value,
-                end: document.getElementById('new_end').value,
-                message: document.getElementById('new_message').value
+                day: activeDay,
+                start: startNode.value,
+                end: endNode.value,
+                message: messageNode.value
             });
+            
+            // 入力欄をクリア
+            startNode.value = ''; endNode.value = ''; messageNode.value = '';
+            
             renderTable();
+        }
+
+        // コピー機能
+        function copyFromDay() {
+            const sourceDay = parseInt(document.getElementById('copy_source_day').value);
+            if (activeDay === sourceDay) {
+                alert("同じ曜日からはコピーできません。");
+                return;
+            }
+
+            if(confirm(`${days[sourceDay]}曜日の予定を、${days[activeDay]}曜日にコピーします。現在の${days[activeDay]}曜日の予定はすべて上書きされますがよろしいですか？`)) {
+                // 現在の曜日の予定を全削除
+                currentData.schedule = currentData.schedule.filter(item => item.day !== activeDay);
+
+                // ソースとなる曜日の予定を抽出し、day を現在の曜日に変更して追加
+                const sourceSchedule = currentData.schedule.filter(item => item.day === sourceDay);
+                sourceSchedule.forEach(item => {
+                    currentData.schedule.push({
+                        id: Date.now() + Math.random(), // idが被らないように微調整
+                        day: activeDay,
+                        start: item.start,
+                        end: item.end,
+                        message: item.message
+                    });
+                });
+
+                renderTable();
+                alert("コピーしました。忘れずに「サーバーに保存する」を押してください。");
+            }
         }
 
         async function saveData() {
